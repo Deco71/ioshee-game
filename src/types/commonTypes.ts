@@ -1,0 +1,1 @@
+export type PreloadedImages = Map<string, HTMLImageElement>;
