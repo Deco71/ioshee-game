@@ -10,6 +10,7 @@ export class IosheeGameEngine {
     }
 
     updateCounter() {
+        console.log("Canvas clicked: moving green right");
         this.counter = this.counter + 10;
         if (this.counter > 400) {
             this.counter = -100;

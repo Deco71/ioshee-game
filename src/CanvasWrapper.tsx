@@ -1,23 +1,19 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { PreloadedImages } from "./types/commonTypes";
 import { useGameEngine } from "./hooks/useGameEngine";
 
-// Create a version counter that increments every time Vite hot-reloads this file
-let hmrVersion = 0;
-if (import.meta.hot) {
-    import.meta.hot.data.version = (import.meta.hot.data.version || 0) + 1;
-    hmrVersion = import.meta.hot.data.version;
-}
-
 interface CanvasWrapperProps {
     images: PreloadedImages;
+    roomName: string;
+    goBack: () => void;
 }
 
 function CanvasWrapper(props: CanvasWrapperProps) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const { images } = props;
+    const [wasReady, setWasReady] = useState(false);
+    const { images, roomName } = props;
 
-    const engineRef = useGameEngine(hmrVersion);
+    const { engineRef, connected, ready } = useGameEngine(roomName);
     if (!engineRef.current) {
         throw new Error("Game engine not initialized");
     }
@@ -26,7 +22,13 @@ function CanvasWrapper(props: CanvasWrapperProps) {
     const requestRef = useRef<number | null>(null);
 
 
-    useEffect(() => {    
+    useEffect(() => {
+        if (!ready) {
+            return;
+        } else if (!wasReady) {
+            setWasReady(true);
+        }
+
         const ctx = getCanvasContext();
 
         const loop = () => {
@@ -39,9 +41,10 @@ function CanvasWrapper(props: CanvasWrapperProps) {
         return () => {
             if (requestRef.current) {
                 cancelAnimationFrame(requestRef.current);
+                requestRef.current = null;
             }
         };
-    }, [images, hmrVersion, engineRef]);
+    }, [images, ready]);
 
     function render(ctx: CanvasRenderingContext2D) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -64,15 +67,39 @@ function CanvasWrapper(props: CanvasWrapperProps) {
     }
 
     return (
-        <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
-            <canvas 
-                id="game-canvas" 
-                ref={canvasRef} 
-                width={400} 
-                height={400} 
-                style={{ border: "2px solid #333" }}
-                onClick={engine.updateCounter}
-            />
+        <div>
+            { connected ? (
+                ready ? (
+                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", marginTop: "20px" }}>
+                        <canvas 
+                            id="game-canvas" 
+                            ref={canvasRef} 
+                            width={400} 
+                            height={400} 
+                            style={{ border: "2px solid #333" }}
+                            onClick={engine.updateCounter}
+                        />
+                        <p>Click the canvas to move the images.</p>
+                    </div>) : 
+                    (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
+                            <h2>{wasReady ? "The other player has disconnected..." : "Waiting for other players..."}</h2>
+                            <p>The game will start once all players are ready.</p>
+                        </div>
+                    )
+            ) :
+            (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
+                    <h2>Connecting to Game Server...</h2>
+                    <p>Please wait while we establish a connection.</p>
+                </div>
+            )}
+            <button 
+                onClick={props.goBack} 
+                style={{ marginTop: "20px", padding: "10px 20px", fontSize: "16px" }}
+            >
+                Back to Room Selection
+            </button>
         </div>
     );
 }

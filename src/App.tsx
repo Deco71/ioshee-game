@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import CanvasWrapper from "./CanvasWrapper";
 import { useImagePreloader } from "./useImagePreloader";
 
@@ -11,10 +11,39 @@ function App() {
     ]), []);
 
     const { isReady, images, progress } = useImagePreloader(assetsToLoad);
+    const [roomInput, setRoomInput] = useState<string>("");
+    const [roomName, setRoomName] = useState<string>("");
 
-    const canvasWrapper = useMemo(() => <CanvasWrapper images={images} />, [images]);
 
-    if (!isReady) {
+    function goBack() {
+        setRoomName("");
+    }
+
+    const canvasWrapper = useMemo(() => <CanvasWrapper images={images} roomName={roomName} goBack={goBack} />, [images, roomName]);
+
+    if (!roomName) {
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
+                <h2>Enter Room Name</h2>
+                <input
+                    type="text"
+                    value={roomInput}
+                    onChange={(e) => setRoomInput(e.target.value)}
+                    style={{ padding: '10px', fontSize: '16px', marginBottom: '20px' }}
+                />
+                <button
+                    onClick={() => {
+                        if (roomInput) {
+                            setRoomName(roomInput);
+                        }
+                    }}
+                    style={{ padding: '10px 20px', fontSize: '16px' }}
+                >
+                    Connect
+                </button>
+            </div>
+        );
+    } else if (!isReady) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
                 <h2>Loading Game Assets...</h2>
@@ -28,9 +57,7 @@ function App() {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
-            <h2>All Assets Loaded!</h2>
             {canvasWrapper}
-            <p>Click the canvas to move the images.</p>
         </div>
     );
 }
