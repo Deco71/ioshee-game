@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import type { PreloadedImages } from "./types/commonTypes";
-import { IosheeGameEngine } from "./gameEngine/GameEngine";
+import { useGameEngine } from "./hooks/useGameEngine";
 
 // Create a version counter that increments every time Vite hot-reloads this file
 let hmrVersion = 0;
@@ -16,26 +16,21 @@ interface CanvasWrapperProps {
 function CanvasWrapper(props: CanvasWrapperProps) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const { images } = props;
-    const gameEngineRef = useRef<IosheeGameEngine>(new IosheeGameEngine());
-    const engine = gameEngineRef.current;
+
+    const engineRef = useGameEngine(hmrVersion);
+    if (!engineRef.current) {
+        throw new Error("Game engine not initialized");
+    }
+    const engine = engineRef.current;
     
-    // Track the animation frame so we can cancel it on unmount
-    const requestRef = useRef<number>(null);
+    const requestRef = useRef<number | null>(null);
 
 
-    // Reset states when HMR occurs
-    useEffect(() => {
-        gameEngineRef.current = new IosheeGameEngine();
-    }, [hmrVersion]);
-
-    useEffect(() => {
-    
+    useEffect(() => {    
         const ctx = getCanvasContext();
 
         const loop = () => {
-
             render(ctx);
-
             requestRef.current = requestAnimationFrame(loop);
         };
 
@@ -46,21 +41,17 @@ function CanvasWrapper(props: CanvasWrapperProps) {
                 cancelAnimationFrame(requestRef.current);
             }
         };
-    }, [images, hmrVersion]);
+    }, [images, hmrVersion, engineRef]);
 
-    // The Render Function
     function render(ctx: CanvasRenderingContext2D) {
-        // Clear screen
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         
-        // Draw background box
         ctx.fillStyle = 'red';
         ctx.fillRect(50, 50, 200, 100);
         
-        // Draw moving image
         const greenImage = images.get("green");
         if (greenImage) {
-            ctx.drawImage(greenImage, engine.counter, 0);
+            ctx.drawImage(greenImage, engine.counter, engine.y);
         }
     }
 
