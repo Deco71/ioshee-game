@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import type { PreloadedImages } from "./types/commonTypes";
+import { IosheeGameEngine } from "./gameEngine/GameEngine";
 
 // Create a version counter that increments every time Vite hot-reloads this file
 let hmrVersion = 0;
@@ -14,29 +15,52 @@ interface CanvasWrapperProps {
 
 function CanvasWrapper(props: CanvasWrapperProps) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const [count, setCount] = useState(0);
     const { images } = props;
+    const gameEngineRef = useRef<IosheeGameEngine>(new IosheeGameEngine());
+    const engine = gameEngineRef.current;
+    
+    // Track the animation frame so we can cancel it on unmount
+    const requestRef = useRef<number>(null);
 
 
-    //Reset states and logic when HMR occurs
+    // Reset states when HMR occurs
     useEffect(() => {
-        setCount(0);
+        gameEngineRef.current = new IosheeGameEngine();
     }, [hmrVersion]);
 
     useEffect(() => {
-        render();
-    }, [images, count]);
-
-
-    function render() {
+    
         const ctx = getCanvasContext();
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+
+        const loop = () => {
+
+            render(ctx);
+
+            requestRef.current = requestAnimationFrame(loop);
+        };
+
+        requestRef.current = requestAnimationFrame(loop);
+
+        return () => {
+            if (requestRef.current) {
+                cancelAnimationFrame(requestRef.current);
+            }
+        };
+    }, [images, hmrVersion]);
+
+    // The Render Function
+    function render(ctx: CanvasRenderingContext2D) {
+        // Clear screen
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        
+        // Draw background box
         ctx.fillStyle = 'red';
         ctx.fillRect(50, 50, 200, 100);
+        
+        // Draw moving image
         const greenImage = images.get("green");
         if (greenImage) {
-            console.log("Rendering green image at x:", count * 10, greenImage.width, greenImage.height);
-            ctx.drawImage(greenImage, count * 10, 0);
+            ctx.drawImage(greenImage, engine.counter, 0);
         }
     }
 
@@ -49,7 +73,16 @@ function CanvasWrapper(props: CanvasWrapperProps) {
     }
 
     return (
-        <canvas id="game-canvas" ref={canvasRef} width={400} height={400} onClick={() => {setCount(count + 1)}} />
+        <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
+            <canvas 
+                id="game-canvas" 
+                ref={canvasRef} 
+                width={400} 
+                height={400} 
+                style={{ border: "2px solid #333" }}
+                onClick={engine.updateCounter}
+            />
+        </div>
     );
 }
 
