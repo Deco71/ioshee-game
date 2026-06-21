@@ -6,19 +6,14 @@ import { createGameSocket } from "../socket/GameSocket";
 export function useGameEngine(channelName: string) {
 
     const engineRef = useRef<IosheeGameEngine | null>(null);
+    const sendMessageRef = useRef<(payload: unknown) => void>(() => {
+        console.warn("Send message called before socket is ready");
+    });
     const [connected, setConnected] = useState(false);
     const [ready, setReady] = useState(false);
 
     if (!engineRef.current) {
         engineRef.current = new IosheeGameEngine();
-    }
-
-    function getPosition() {
-        const engine = engineRef.current;
-        if (!engine) {
-            return { x: 0, y: 0 };
-        }
-        return { x: engine.counter, y: engine.y };
     }
 
     useEffect(() => {
@@ -31,15 +26,12 @@ export function useGameEngine(channelName: string) {
         if (!engine) return;
         if (!connected) return;
 
-        const handleKeyDown = (e: KeyboardEvent) => engine.handleKeyDown(e.code);
-        const handleKeyUp = (e: KeyboardEvent) => engine.handleKeyUp(e.code);
+        const handleKeyDown = (e: KeyboardEvent) => engine.handleKey(e.code, sendMessageRef.current);
 
         window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("keyup", handleKeyUp);
 
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
-            window.removeEventListener("keyup", handleKeyUp);
         };
     }, [connected]);
 
@@ -47,7 +39,7 @@ export function useGameEngine(channelName: string) {
         const engine = engineRef.current;
         if (!engine) return;
 
-        const cleanupSocket = createGameSocket(channelName, getPosition, 
+        const {sendMessage, cleanupReconnect} = createGameSocket(channelName, 
         {
             onOpen: () => {
                 setConnected(true);
@@ -67,7 +59,9 @@ export function useGameEngine(channelName: string) {
             },
         });
 
-        return cleanupSocket;
+        sendMessageRef.current = sendMessage;
+
+        return cleanupReconnect;
     }, [channelName]);
 
     return { engineRef, connected, ready };

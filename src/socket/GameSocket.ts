@@ -10,13 +10,20 @@ export interface GameSocketHandlers {
 
 export function createGameSocket(
     channelName: string,
-    getPosition: () => { x: number; y: number; },
     handlers: GameSocketHandlers,
 ) {
     let socket: WebSocket | null = null;
     let reconnectTimer: number | null = null;
     let attemptingConnection = false;
     let sendInterval: number | null = null;
+
+    const sendMessage = (payload: unknown) => {
+        if (socket?.readyState === WebSocket.OPEN) {
+            socket.send(typeof payload === "string" ? payload : JSON.stringify(payload));
+        } else {
+            console.warn("Game socket is not open; cannot send message", payload);
+        }
+    };
 
     const scheduleReconnect = () => {
         if (reconnectTimer != null) return;
@@ -35,12 +42,6 @@ export function createGameSocket(
         const handleOpen = () => {
             attemptingConnection = false;
             handlers.onOpen();
-
-            sendInterval = window.setInterval(() => {
-                if (socket?.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify(getPosition()));
-                }
-            }, 1000);
         };
 
         const handleMessage = (event: MessageEvent) => {
@@ -90,11 +91,13 @@ export function createGameSocket(
 
     const cleanup = connect();
 
-    return () => {
+    const cleanupReconnect = () => {
         if (reconnectTimer != null) {
             clearTimeout(reconnectTimer);
             reconnectTimer = null;
         }
         cleanup?.();
     };
+
+    return { sendMessage, cleanupReconnect };
 }

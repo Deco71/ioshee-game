@@ -77,9 +77,7 @@ function CanvasWrapper(props: CanvasWrapperProps) {
                             width={400} 
                             height={400} 
                             style={{ border: "2px solid #333" }}
-                            onClick={engine.updateCounter}
                         />
-                        <p>Click the canvas to move the images.</p>
                     </div>) : 
                     (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>

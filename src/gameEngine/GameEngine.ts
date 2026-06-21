@@ -9,8 +9,7 @@ export class IosheeGameEngine {
         this.moveGreenDown = this.moveGreenDown.bind(this);
     }
 
-    updateCounter() {
-        console.log("Canvas clicked: moving green right");
+    private updateCounter() {
         this.counter = this.counter + 10;
         if (this.counter > 400) {
             this.counter = -100;
@@ -18,22 +17,17 @@ export class IosheeGameEngine {
     }
 
     moveGreenDown() {
-        console.log("WebSocket event: move green down");
         this.y += 10;
         if (this.y > 400) {
             this.y = 0;
         }
     }
 
-    handleKeyDown(keyCode: string) {
-        console.log(`Key down: ${keyCode}`);
+    handleKey(keyCode: string, sendMessage: (payload: unknown) => void) {
+        sendMessage({ type: "key", keyCode });
         if (keyCode === "ArrowRight") {
             this.updateCounter();
         }
-    }
-
-    handleKeyUp(keyCode: string) {
-        console.log(`Key up: ${keyCode}`);
     }
 
     reset() {
