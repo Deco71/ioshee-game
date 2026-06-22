@@ -1,51 +1,46 @@
-// hooks/useGameEngine.ts
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { IosheeGameEngine } from "../gameEngine/GameEngine";
 import { createGameSocket } from "../socket/GameSocket";
 
 export function useGameEngine(channelName: string) {
+    const engine = useMemo(() => new IosheeGameEngine(), []);
 
-    const engineRef = useRef<IosheeGameEngine | null>(null);
     const sendMessageRef = useRef<(payload: unknown) => void>(() => {
         console.warn("Send message called before socket is ready");
     });
+
     const [connected, setConnected] = useState(false);
     const [ready, setReady] = useState(false);
-
-    if (!engineRef.current) {
-        engineRef.current = new IosheeGameEngine();
-    }
+    const [wasReady, setWasReady] = useState(false);
 
     useEffect(() => {
-        engineRef.current?.reset();
-        setConnected(false);
-    }, []);
+        engine.reset();
+    }, [engine]);
 
     useEffect(() => {
-        const engine = engineRef.current;
-        if (!engine) return;
-        if (!connected) return;
+        if (!connected || !ready) return;
 
-        const handleKeyDown = (e: KeyboardEvent) => engine.handleKey(e.code, sendMessageRef.current);
+        const handleKeyDown = (e: KeyboardEvent) => {
+            engine.handleKey(e.code, sendMessageRef.current);
+        };
 
         window.addEventListener("keydown", handleKeyDown);
 
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [connected]);
+    }, [connected, engine, ready]);
 
     useEffect(() => {
-        const engine = engineRef.current;
-        if (!engine) return;
-
-        const {sendMessage, cleanupReconnect} = createGameSocket(channelName, 
-        {
+        const { sendMessage, cleanupReconnect } = createGameSocket(channelName, {
             onOpen: () => {
                 setConnected(true);
                 console.log("Game WebSocket connected");
             },
-            onReady: () => setReady(true),
+            onReady: () => {
+                setReady(true);
+                setWasReady(true);
+            },
             onMoveGreenDown: () => engine.moveGreenDown(),
             onReset: () => engine.reset(),
             onPause: () => setReady(false),
@@ -62,7 +57,7 @@ export function useGameEngine(channelName: string) {
         sendMessageRef.current = sendMessage;
 
         return cleanupReconnect;
-    }, [channelName]);
+    }, [channelName, engine]);
 
-    return { engineRef, connected, ready };
+    return { engine, connected, ready, wasReady };
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import CanvasWrapper from "./CanvasWrapper";
 import { useImagePreloader } from "./useImagePreloader";
 
@@ -15,11 +15,13 @@ function App() {
     const [roomName, setRoomName] = useState<string>("");
 
 
-    function goBack() {
+    const goBack = useCallback(() => {
         setRoomName("");
-    }
+    }, []);
 
-    const canvasWrapper = useMemo(() => <CanvasWrapper images={images} roomName={roomName} goBack={goBack} />, [images, roomName]);
+    const canvasWrapper = useMemo(() => (
+        <CanvasWrapper key={roomName} images={images} roomName={roomName} goBack={goBack} />
+    ), [images, roomName, goBack]);
 
     if (!roomName) {
         return (
