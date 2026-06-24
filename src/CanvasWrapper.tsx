@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import type { PreloadedImages } from "./types/commonTypes";
 import { useGameEngine } from "./hooks/useGameEngine";
+import { Images } from "./enum/images";
 
 interface CanvasWrapperProps {
     images: PreloadedImages;
@@ -29,9 +30,13 @@ function CanvasWrapper(props: CanvasWrapperProps) {
         ctx.fillStyle = 'red';
         ctx.fillRect(50, 50, 200, 100);
 
-        const greenImage = images.get("green");
+        const greenImage = images.get(Images.GREEN);
+        const starImage = images.get(Images.GREEN_STAR);
         if (greenImage) {
             ctx.drawImage(greenImage, engine.counter, engine.y);
+        }
+        if (starImage) {
+            ctx.drawImage(starImage, 100, 100);
         }
     }, [images, engine]);
 

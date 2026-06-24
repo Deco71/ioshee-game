@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { getImageUrl, type Images } from "./enum/images";
 import type { PreloadedImages } from "./types/commonTypes";
 
-export function useImagePreloader(imageSources: Map<string, string>) {
+export function useImagePreloader(imageSources: Map<Images, string>) {
     const [images, setImages] = useState<PreloadedImages>(new Map());
     const [isReady, setIsReady] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -10,11 +11,12 @@ export function useImagePreloader(imageSources: Map<string, string>) {
         let loadedCount = 0;
         const loadedImages: PreloadedImages = new Map();
 
-        const loadPromises = Array.from(imageSources.entries()).map(([key, src]) => {
+        const loadPromises = Array.from(imageSources.entries()).map(([key]) => {
             return new Promise<HTMLImageElement>((resolve, reject) => {
                 const img = new Image();
+                const src = getImageUrl(key) || '';
                 img.src = src;
-                
+
                 img.onload = () => {
                     loadedCount++;
                     setProgress(Math.round((loadedCount / imageSources.size) * 100));

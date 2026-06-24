@@ -1,14 +1,11 @@
 import { useMemo, useState, useCallback } from "react";
 import CanvasWrapper from "./CanvasWrapper";
 import { useImagePreloader } from "./useImagePreloader";
+import { Images } from "./enum/images";
 
 function App() {
 
-    const assetsToLoad = useMemo(() => new Map<string, string>([
-        ["green", "https://upload.wikimedia.org/wikipedia/commons/d/d2/Svg_example_square.svg"],
-        ["tiger", "https://upload.wikimedia.org/wikipedia/commons/f/fd/Ghostscript_Tiger.svg"],
-        ["react", "https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg"]
-    ]), []);
+    const assetsToLoad = useMemo(() => new Map<Images, string>(Object.entries(Images) as [Images, string][]), []);
 
     const { isReady, images, progress } = useImagePreloader(assetsToLoad);
     const [roomInput, setRoomInput] = useState<string>("");

@@ -1,1 +1,3 @@
-export type PreloadedImages = Map<string, HTMLImageElement>;
+import { Images } from "../enum/images";
+
+export type PreloadedImages = Map<Images, HTMLImageElement>;
