@@ -41,7 +41,7 @@ export function useGameEngine(channelName: string) {
                 setReady(true);
                 setWasReady(true);
             },
-            onMoveGreenDown: () => engine.moveGreenDown(),
+            onMoveGreenDown: () => engine.moveFallingObjectsDown(),
             onReset: () => engine.reset(),
             onPause: () => setReady(false),
             onClose: () => {

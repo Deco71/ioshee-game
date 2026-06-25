@@ -1,7 +1,13 @@
 import { useEffect, useRef, useCallback } from "react";
 import type { PreloadedImages } from "./types/commonTypes";
 import { useGameEngine } from "./hooks/useGameEngine";
-import { Images } from "./enum/images";
+import { Images } from "./types/Images";
+
+const BOARD_COLUMNS = 4;
+const BOARD_ROWS = 7;
+const CELL_SIZE = 56;
+const BOARD_ORIGIN_X = 24;
+const BOARD_ORIGIN_Y = 24;
 
 interface CanvasWrapperProps {
     images: PreloadedImages;
@@ -26,18 +32,52 @@ function CanvasWrapper(props: CanvasWrapperProps) {
 
     const render = useCallback((ctx: CanvasRenderingContext2D) => {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.fillStyle = "#f6f2ea";
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-        ctx.fillStyle = 'red';
-        ctx.fillRect(50, 50, 200, 100);
+        const cellWidth = CELL_SIZE;
+        const cellHeight = CELL_SIZE;
+        const drawPiece = (imageKey: Images, columnIndex: number, rowIndex: number) => {
+            const image = images.get(imageKey);
+            if (!image) {
+                return;
+            }
 
-        const greenImage = images.get(Images.GREEN);
-        const starImage = images.get(Images.GREEN_STAR);
-        if (greenImage) {
-            ctx.drawImage(greenImage, engine.counter, engine.y);
+            ctx.drawImage(
+                image,
+                BOARD_ORIGIN_X + columnIndex * cellWidth,
+                BOARD_ORIGIN_Y + rowIndex * cellHeight,
+                cellWidth,
+                cellHeight,
+            );
+        };
+
+        ctx.strokeStyle = "#3b2f2a";
+        ctx.lineWidth = 2;
+        for (let columnIndex = 0; columnIndex < BOARD_COLUMNS; columnIndex++) {
+            for (let rowIndex = 0; rowIndex < BOARD_ROWS; rowIndex++) {
+                const x = BOARD_ORIGIN_X + columnIndex * cellWidth;
+                const y = BOARD_ORIGIN_Y + rowIndex * cellHeight;
+                ctx.strokeRect(x, y, cellWidth, cellHeight);
+                const settledObject = engine.gameBoard[columnIndex][rowIndex];
+                if (settledObject) {
+                    drawPiece(settledObject, columnIndex, rowIndex);
+                }
+            }
         }
-        if (starImage) {
-            ctx.drawImage(starImage, 100, 100);
-        }
+
+        engine.fallingObjects.objects.forEach((fallingObject, columnIndex) => {
+            if (!fallingObject) {
+                return;
+            }
+
+            const rowIndex = engine.fallingObjects.y;
+            if (rowIndex < 0 || rowIndex >= BOARD_ROWS) {
+                return;
+            }
+
+            drawPiece(fallingObject, columnIndex, rowIndex);
+        });
     }, [images, engine]);
 
     useEffect(() => {

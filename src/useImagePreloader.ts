@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getImageUrl, type Images } from "./enum/images";
+import { getImageUrl, type Images } from "./types/Images";
 import type { PreloadedImages } from "./types/commonTypes";
 
 export function useImagePreloader(imageSources: Map<Images, string>) {
@@ -20,7 +20,7 @@ export function useImagePreloader(imageSources: Map<Images, string>) {
                 img.onload = () => {
                     loadedCount++;
                     setProgress(Math.round((loadedCount / imageSources.size) * 100));
-                    loadedImages.set(key, img); // Store in the exact order they were requested
+                    loadedImages.set(key, img);
                     resolve(img);
                 };
                 

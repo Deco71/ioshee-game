@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback } from "react";
 import CanvasWrapper from "./CanvasWrapper";
 import { useImagePreloader } from "./useImagePreloader";
-import { Images } from "./enum/images";
+import { Images } from "./types/Images";
 
 function App() {
 

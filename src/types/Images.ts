@@ -27,7 +27,6 @@ export function getImageUrl(image: Images): string {
         case Images.YELLOW_STAR:
             return "./gameAssets/yellowStar.svg";
         default:
-            const searchedImage: never = image;
-            throw new Error(`Unknown image: ${searchedImage}`);
+            throw new Error(`Unknown URL for image: ${image}`);
     }
 }
