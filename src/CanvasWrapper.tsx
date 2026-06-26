@@ -131,33 +131,34 @@ function CanvasWrapper(props: CanvasWrapperProps) {
     }, [ready, getCanvasContext, render]);
 
     return (
-        <div>
+        <div className="canvas-wrapper-container">
             {singlePlayer || connected ? (
                 ready ? (
-                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", marginTop: "20px" }}>
+                    <div className="canvas-ready-container">
                         <canvas
                             id="game-canvas"
+                            className="game-canvas"
                             ref={canvasRef}
                             width={Math.round(274 * scaleMultiplier)}
                             height={Math.round(448 * scaleMultiplier)}
                         />
                     </div>) :
                     (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
+                        <div className="waiting-message-container">
                             <h2>{wasReady ? "The other player has disconnected..." : "Waiting for other players..."}</h2>
                             <p>The game will start once all players are ready.</p>
                         </div>
                     )
             ) :
                 (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
+                    <div className="connecting-message-container">
                         <h2>Connecting to Game Server...</h2>
                         <p>Please wait while we establish a connection.</p>
                     </div>
                 )}
             <button
+                className="back-button"
                 onClick={goBack}
-                style={{ marginTop: "20px", padding: "10px 20px", fontSize: "16px" }}
             >
                 Back to Room Selection
             </button>

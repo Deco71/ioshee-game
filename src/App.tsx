@@ -24,27 +24,27 @@ function App() {
 
     if (!roomName && !singlePlayer) {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
+            <div className="room-selection">
                 <h2>Enter Room Name</h2>
                 <input
+                    className="input-field"
                     type="text"
                     value={roomInput}
                     onChange={(e) => setRoomInput(e.target.value)}
-                    style={{ padding: '10px', fontSize: '16px', marginBottom: '20px' }}
                 />
                 <button
+                    className="button-primary"
                     onClick={() => {
                         if (roomInput) {
                             setRoomName(roomInput);
                         }
                     }}
-                    style={{ padding: '10px 20px', fontSize: '16px' }}
                 >
                     Connect
                 </button>
                 <button
+                    className="button-primary"
                     onClick={() => setSinglePlayer(true)}
-                    style={{ padding: '10px 20px', fontSize: '16px', marginTop: '12px' }}
                 >
                     Single Player
                 </button>
@@ -52,18 +52,18 @@ function App() {
         );
     } else if (!isReady) {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
+            <div className="loading-screen">
                 <h2>Loading Game Assets...</h2>
                 <p>{progress}%</p>
-                <div style={{ width: '200px', height: '20px', background: '#ccc', borderRadius: '10px' }}>
-                    <div style={{ width: `${progress}%`, height: '100%', background: 'green', borderRadius: '10px', transition: 'width 0.2s' }} />
+                <div className="progress-bar-container">
+                    <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
                 </div>
             </div>
         );
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
+        <div className="screen-container">
             {canvasWrapper}
         </div>
     );
