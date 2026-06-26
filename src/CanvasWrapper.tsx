@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import type { PreloadedImages } from "./types/commonTypes";
 import { useGameEngine } from "./hooks/useGameEngine";
 import { Images } from "./types/Images";
@@ -13,14 +13,37 @@ interface CanvasWrapperProps {
     images: PreloadedImages;
     roomName: string;
     goBack: () => void;
+    singlePlayer?: boolean;
 }
 
 function CanvasWrapper(props: CanvasWrapperProps) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const requestRef = useRef<number | null>(null);
+    const [scaleMultiplier, setScaleMultiplier] = useState(1);
 
-    const { images, roomName, goBack } = props;
-    const { engine, connected, ready, wasReady } = useGameEngine(roomName);
+    const { images, roomName, goBack, singlePlayer = false } = props;
+    const { engine, connected, ready, wasReady } = useGameEngine(roomName, { singlePlayer });
+
+    useEffect(() => {
+        const handleResize = () => {
+            const HEIGHT_BUFFER = 200; 
+            const WIDTH_BUFFER = 40;   
+
+            const availableWidth = window.innerWidth - WIDTH_BUFFER;
+            const availableHeight = window.innerHeight - HEIGHT_BUFFER;
+
+            const rawScale = Math.min(availableWidth, availableHeight) / 448;
+            
+            const scale = Math.max(rawScale, 0.2); 
+            
+            setScaleMultiplier(scale);
+        };
+
+        window.addEventListener("resize", handleResize);
+        handleResize();
+
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const getCanvasContext = useCallback((): CanvasRenderingContext2D => {
         const canvas = canvasRef.current;
@@ -35,29 +58,34 @@ function CanvasWrapper(props: CanvasWrapperProps) {
         ctx.fillStyle = "#f6f2ea";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-        const cellWidth = CELL_SIZE;
-        const cellHeight = CELL_SIZE;
+        const cellWidth = CELL_SIZE * scaleMultiplier;
+        const cellHeight = CELL_SIZE * scaleMultiplier;
         const drawPiece = (imageKey: Images, columnIndex: number, rowIndex: number) => {
             const image = images.get(imageKey);
             if (!image) {
                 return;
             }
 
+            const boardOriginX = BOARD_ORIGIN_X * scaleMultiplier;
+            const boardOriginY = BOARD_ORIGIN_Y * scaleMultiplier;
             ctx.drawImage(
                 image,
-                BOARD_ORIGIN_X + columnIndex * cellWidth,
-                BOARD_ORIGIN_Y + rowIndex * cellHeight,
+                boardOriginX + columnIndex * cellWidth,
+                boardOriginY + rowIndex * cellHeight,
                 cellWidth,
                 cellHeight,
             );
         };
 
+        const boardOriginX = BOARD_ORIGIN_X * scaleMultiplier;
+        const boardOriginY = BOARD_ORIGIN_Y * scaleMultiplier;
+
         ctx.strokeStyle = "#3b2f2a";
         ctx.lineWidth = 2;
         for (let columnIndex = 0; columnIndex < BOARD_COLUMNS; columnIndex++) {
             for (let rowIndex = 0; rowIndex < BOARD_ROWS; rowIndex++) {
-                const x = BOARD_ORIGIN_X + columnIndex * cellWidth;
-                const y = BOARD_ORIGIN_Y + rowIndex * cellHeight;
+                const x = boardOriginX + columnIndex * cellWidth;
+                const y = boardOriginY + rowIndex * cellHeight;
                 ctx.strokeRect(x, y, cellWidth, cellHeight);
                 const settledObject = engine.gameBoard[columnIndex][rowIndex];
                 if (settledObject) {
@@ -78,7 +106,7 @@ function CanvasWrapper(props: CanvasWrapperProps) {
 
             drawPiece(fallingObject, columnIndex, rowIndex);
         });
-    }, [images, engine]);
+    }, [images, engine, scaleMultiplier]);
 
     useEffect(() => {
         if (!ready) {
@@ -104,15 +132,14 @@ function CanvasWrapper(props: CanvasWrapperProps) {
 
     return (
         <div>
-            {connected ? (
+            {singlePlayer || connected ? (
                 ready ? (
                     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", marginTop: "20px" }}>
                         <canvas
                             id="game-canvas"
                             ref={canvasRef}
-                            width={400}
-                            height={400}
-                            style={{ border: "2px solid #333" }}
+                            width={Math.round(274 * scaleMultiplier)}
+                            height={Math.round(448 * scaleMultiplier)}
                         />
                     </div>) :
                     (

@@ -10,17 +10,19 @@ function App() {
     const { isReady, images, progress } = useImagePreloader(assetsToLoad);
     const [roomInput, setRoomInput] = useState<string>("");
     const [roomName, setRoomName] = useState<string>("");
+    const [singlePlayer, setSinglePlayer] = useState<boolean>(false);
 
 
     const goBack = useCallback(() => {
         setRoomName("");
+        setSinglePlayer(false);
     }, []);
 
     const canvasWrapper = useMemo(() => (
-        <CanvasWrapper key={roomName} images={images} roomName={roomName} goBack={goBack} />
-    ), [images, roomName, goBack]);
+        <CanvasWrapper key={`${singlePlayer ? "single" : "multi"}-${roomName}`} images={images} roomName={roomName} goBack={goBack} singlePlayer={singlePlayer} />
+    ), [images, roomName, goBack, singlePlayer]);
 
-    if (!roomName) {
+    if (!roomName && !singlePlayer) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
                 <h2>Enter Room Name</h2>
@@ -39,6 +41,12 @@ function App() {
                     style={{ padding: '10px 20px', fontSize: '16px' }}
                 >
                     Connect
+                </button>
+                <button
+                    onClick={() => setSinglePlayer(true)}
+                    style={{ padding: '10px 20px', fontSize: '16px', marginTop: '12px' }}
+                >
+                    Single Player
                 </button>
             </div>
         );

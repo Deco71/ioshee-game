@@ -2,22 +2,49 @@ import { useRef, useEffect, useState, useMemo } from "react";
 import { IosheeGameEngine } from "../gameEngine/GameEngine";
 import { createGameSocket } from "../socket/GameSocket";
 
-export function useGameEngine(channelName: string) {
+interface UseGameEngineOptions {
+    singlePlayer?: boolean;
+}
+
+export function useGameEngine(channelName: string, options: UseGameEngineOptions = {}) {
+    const { singlePlayer = false } = options;
     const engine = useMemo(() => new IosheeGameEngine(), []);
 
     const sendMessageRef = useRef<(payload: unknown) => void>(() => {
         console.warn("Send message called before socket is ready");
     });
 
-    const [connected, setConnected] = useState(false);
-    const [ready, setReady] = useState(false);
-    const [wasReady, setWasReady] = useState(false);
+    const [connected, setConnected] = useState(singlePlayer);
+    const [ready, setReady] = useState(singlePlayer);
+    const [wasReady, setWasReady] = useState(singlePlayer);
 
     useEffect(() => {
         engine.reset();
     }, [engine]);
 
     useEffect(() => {
+        if (!singlePlayer) {
+            return;
+        }
+
+        setConnected(true);
+        setReady(true);
+        setWasReady(true);
+
+        const intervalId = setInterval(() => {
+            engine.moveFallingObjectsDown();
+        }, 1000);
+
+        return () => {
+            clearInterval(intervalId);
+        };
+    }, [engine, singlePlayer]);
+
+    useEffect(() => {
+        if (singlePlayer) {
+            return;
+        }
+
         if (!connected || !ready) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -57,7 +84,7 @@ export function useGameEngine(channelName: string) {
         sendMessageRef.current = sendMessage;
 
         return cleanupReconnect;
-    }, [channelName, engine]);
+    }, [channelName, engine, singlePlayer]);
 
     return { engine, connected, ready, wasReady };
 }
