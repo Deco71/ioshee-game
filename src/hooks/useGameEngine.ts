@@ -30,14 +30,6 @@ export function useGameEngine(channelName: string, options: UseGameEngineOptions
         setConnected(true);
         setReady(true);
         setWasReady(true);
-
-        const intervalId = setInterval(() => {
-            engine.moveFallingObjectsDown();
-        }, 1000);
-
-        return () => {
-            clearInterval(intervalId);
-        };
     }, [engine, singlePlayer]);
 
     useEffect(() => {
@@ -59,6 +51,7 @@ export function useGameEngine(channelName: string, options: UseGameEngineOptions
     }, [connected, engine, ready]);
 
     useEffect(() => {
+        if (singlePlayer) return;
         const { sendMessage, cleanupReconnect } = createGameSocket(channelName, {
             onOpen: () => {
                 setConnected(true);

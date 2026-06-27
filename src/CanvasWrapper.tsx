@@ -4,16 +4,23 @@ import { useGameEngine } from "./hooks/useGameEngine";
 import { Images } from "./types/Images";
 
 const BOARD_COLUMNS = 4;
+const PREVIEW_ROWS = 1;
+const PREVIEW_HEIGHT = PREVIEW_ROWS * 30;
 const BOARD_ROWS = 7;
+const TOTAL_ROWS = BOARD_ROWS + PREVIEW_ROWS;
 const CELL_SIZE = 56;
 const BOARD_ORIGIN_X = 24;
 const BOARD_ORIGIN_Y = 24;
+const BOARD_HEIGHT = TOTAL_ROWS * CELL_SIZE + 2 * BOARD_ORIGIN_Y + PREVIEW_HEIGHT;
+const BOARD_WIDTH = BOARD_COLUMNS * CELL_SIZE + 2 * BOARD_ORIGIN_X;
 
 interface CanvasWrapperProps {
     images: PreloadedImages;
     roomName: string;
     goBack: () => void;
     singlePlayer?: boolean;
+    gameSpeed?: number;
+    startLines?: number;
 }
 
 function CanvasWrapper(props: CanvasWrapperProps) {
@@ -21,7 +28,7 @@ function CanvasWrapper(props: CanvasWrapperProps) {
     const requestRef = useRef<number | null>(null);
     const [scaleMultiplier, setScaleMultiplier] = useState(1);
 
-    const { images, roomName, goBack, singlePlayer = false } = props;
+    const { images, roomName, goBack, singlePlayer = false, gameSpeed = 1, startLines = 0 } = props;
     const { engine, connected, ready, wasReady } = useGameEngine(roomName, { singlePlayer });
 
     useEffect(() => {
@@ -32,7 +39,7 @@ function CanvasWrapper(props: CanvasWrapperProps) {
             const availableWidth = window.innerWidth - WIDTH_BUFFER;
             const availableHeight = window.innerHeight - HEIGHT_BUFFER;
 
-            const rawScale = Math.min(availableWidth, availableHeight) / 448;
+            const rawScale = Math.min(availableWidth, availableHeight) / BOARD_HEIGHT;
             
             const scale = Math.max(rawScale, 0.2); 
             
@@ -60,47 +67,68 @@ function CanvasWrapper(props: CanvasWrapperProps) {
 
         const cellWidth = CELL_SIZE * scaleMultiplier;
         const cellHeight = CELL_SIZE * scaleMultiplier;
+        const boardOriginX = BOARD_ORIGIN_X * scaleMultiplier;
+        const boardOriginY = BOARD_ORIGIN_Y * scaleMultiplier;
+
         const drawPiece = (imageKey: Images, columnIndex: number, rowIndex: number) => {
             const image = images.get(imageKey);
             if (!image) {
                 return;
             }
 
-            const boardOriginX = BOARD_ORIGIN_X * scaleMultiplier;
-            const boardOriginY = BOARD_ORIGIN_Y * scaleMultiplier;
+            // Calculate base Y position
+            let y = boardOriginY + rowIndex * cellHeight;
+            
+            // Add the preview gap offset for pieces on the main board
+            if (rowIndex >= PREVIEW_ROWS) {
+                y += PREVIEW_HEIGHT * scaleMultiplier;
+            }
+
             ctx.drawImage(
                 image,
                 boardOriginX + columnIndex * cellWidth,
-                boardOriginY + rowIndex * cellHeight,
+                y,
                 cellWidth,
                 cellHeight,
             );
         };
 
-        const boardOriginX = BOARD_ORIGIN_X * scaleMultiplier;
-        const boardOriginY = BOARD_ORIGIN_Y * scaleMultiplier;
-
         ctx.strokeStyle = "#3b2f2a";
         ctx.lineWidth = 2;
+
+        // Draw Preview Row
+        for (let columnIndex = 0; columnIndex < BOARD_COLUMNS; columnIndex++) {
+            const x = boardOriginX + columnIndex * cellWidth;
+            const y = boardOriginY;
+            ctx.strokeRect(x, y, cellWidth, cellHeight);
+
+            const nextObject = engine.nextObjects[columnIndex];
+            if (nextObject) {
+                drawPiece(nextObject, columnIndex, 0);
+            }
+        }
+
+        // Draw Main Board
         for (let columnIndex = 0; columnIndex < BOARD_COLUMNS; columnIndex++) {
             for (let rowIndex = 0; rowIndex < BOARD_ROWS; rowIndex++) {
                 const x = boardOriginX + columnIndex * cellWidth;
-                const y = boardOriginY + rowIndex * cellHeight;
+                const y = boardOriginY + (rowIndex + PREVIEW_ROWS) * cellHeight + (PREVIEW_HEIGHT * scaleMultiplier);
                 ctx.strokeRect(x, y, cellWidth, cellHeight);
                 const settledObject = engine.gameBoard[columnIndex][rowIndex];
                 if (settledObject) {
-                    drawPiece(settledObject, columnIndex, rowIndex);
+                    drawPiece(settledObject, columnIndex, rowIndex + PREVIEW_ROWS);
                 }
             }
         }
 
+        // Draw Falling Objects
         engine.fallingObjects.objects.forEach((fallingObject, columnIndex) => {
             if (!fallingObject) {
                 return;
             }
 
-            const rowIndex = engine.fallingObjects.y;
-            if (rowIndex < 0 || rowIndex >= BOARD_ROWS) {
+            const rowIndex = engine.fallingObjects.y + PREVIEW_ROWS;
+            if (rowIndex < 0 || rowIndex >= TOTAL_ROWS) {
                 return;
             }
 
@@ -115,12 +143,36 @@ function CanvasWrapper(props: CanvasWrapperProps) {
 
         const ctx = getCanvasContext();
 
-        const loop = () => {
+        let windowStartTime = performance.now();
+        let currentPhase = 0;
+
+        const gameLoop = (timestamp : number) => {
+            const elapsed = timestamp - windowStartTime;
+            if (!ready) return;
+
+            if (currentPhase === 0) {
+                engine.checkForEmptyFallingObjects();
+                currentPhase = 1; 
+            } 
+            else if (currentPhase === 1 && elapsed >= 300 * (1 / gameSpeed)) {
+                engine.handleCollision();
+                currentPhase = 2;
+            } 
+            else if (elapsed >= 1000 * (1 / gameSpeed)) {
+                engine.moveFallingObjectsDown();
+                windowStartTime = timestamp - (elapsed % 1000 * (1 / gameSpeed)); 
+                currentPhase = 0;
+            }
+
             render(ctx);
-            requestRef.current = requestAnimationFrame(loop);
+
+            requestRef.current = requestAnimationFrame(gameLoop);
         };
 
-        requestRef.current = requestAnimationFrame(loop);
+        requestRef.current = requestAnimationFrame((timestamp) => {
+            windowStartTime = timestamp;
+            gameLoop(timestamp);
+        });
 
         return () => {
             if (requestRef.current) {
@@ -128,7 +180,7 @@ function CanvasWrapper(props: CanvasWrapperProps) {
                 requestRef.current = null;
             }
         };
-    }, [ready, getCanvasContext, render]);
+    }, [ready, engine, getCanvasContext, render]);
 
     return (
         <div className="canvas-wrapper-container">
@@ -139,8 +191,8 @@ function CanvasWrapper(props: CanvasWrapperProps) {
                             id="game-canvas"
                             className="game-canvas"
                             ref={canvasRef}
-                            width={Math.round(274 * scaleMultiplier)}
-                            height={Math.round(448 * scaleMultiplier)}
+                            width={Math.round(BOARD_WIDTH * scaleMultiplier)}
+                            height={Math.round(BOARD_HEIGHT * scaleMultiplier)}
                         />
                     </div>) :
                     (

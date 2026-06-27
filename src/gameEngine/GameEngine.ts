@@ -1,6 +1,7 @@
 import { FallingObjects } from "../classes/FallingObjects";
-import type { Gameboard, GameColumn, GameObject, NextObjects } from "../types/commonTypes";
+import { type Gameboard, type GameColumn, type GameObject, type NextObjects } from "../types/commonTypes";
 import { Images } from "../types/Images";
+import { areGameObjectsEqual } from "../utils";
 
 export class IosheeGameEngine {
     gameBoard: Gameboard;
@@ -12,7 +13,6 @@ export class IosheeGameEngine {
         Images.BLACK_STAR,
         Images.GREEN_STAR,
         Images.RED_STAR,
-        Images.WHITE_STAR,
         Images.YELLOW_STAR,
     ];
 
@@ -22,6 +22,8 @@ export class IosheeGameEngine {
         this.gameBoard = [this.createColumn(), this.createColumn(), this.createColumn(), this.createColumn()];
         this.updatePosition = this.updatePosition.bind(this);
         this.moveFallingObjectsDown = this.moveFallingObjectsDown.bind(this);
+        this.spawnFallingObjects();
+        this.spawnFallingObjects();
     }
 
     private updatePosition() {
@@ -45,20 +47,34 @@ export class IosheeGameEngine {
             objects[position] = randomImages[index] ?? null;
         });
 
-        this.fallingObjects = new FallingObjects(objects);
+        this.fallingObjects = new FallingObjects([...this.nextObjects]);
+        this.nextObjects = [...objects];
     }
 
     moveFallingObjectsDown() {
         this.fallingObjects.y += 1;
+    }
+
+    handleCollision() {
         for (let i = 0; i < this.fallingObjects.objects.length; i++) {
             if (this.fallingObjects.objects[i] !== null) {
-                const column = this.gameBoard[i];
-                if (this.fallingObjects.y === 6 || column[this.fallingObjects.y+1] !== null) {
-                    column[this.fallingObjects.y] = this.fallingObjects.objects[i];
-                    this.fallingObjects.objects[i] = null;
+                if (this.fallingObjects.y === 6 || this.gameBoard[i][this.fallingObjects.y+1] !== null) {
+                    const column = this.gameBoard[i];
+                    const fallingObjects = this.fallingObjects.objects;
+                    if (areGameObjectsEqual(column[this.fallingObjects.y+1], fallingObjects[i])) {
+                        fallingObjects[i] = null;
+                        column[this.fallingObjects.y+1] = null;
+                        this.points += 10;
+                    } else {
+                        this.gameBoard[i][this.fallingObjects.y] = fallingObjects[i];
+                        fallingObjects[i] = null;
+                    }
                 }
             }
         }
+    }
+
+    checkForEmptyFallingObjects() {
         if (this.fallingObjects.objects.every(obj => obj === null)) {
             this.spawnFallingObjects();
         }
