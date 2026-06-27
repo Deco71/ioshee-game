@@ -9,9 +9,11 @@ const PREVIEW_HEIGHT = PREVIEW_ROWS * 30;
 const BOARD_ROWS = 7;
 const TOTAL_ROWS = BOARD_ROWS + PREVIEW_ROWS;
 const CELL_SIZE = 56;
+const CONTROL_HEIGHT = CELL_SIZE;
+const CONTROL_GAP = 16;
 const BOARD_ORIGIN_X = 24;
 const BOARD_ORIGIN_Y = 24;
-const BOARD_HEIGHT = TOTAL_ROWS * CELL_SIZE + 2 * BOARD_ORIGIN_Y + PREVIEW_HEIGHT;
+const BOARD_HEIGHT = TOTAL_ROWS * CELL_SIZE + 2 * BOARD_ORIGIN_Y + PREVIEW_HEIGHT + CONTROL_HEIGHT + CONTROL_GAP;
 const BOARD_WIDTH = BOARD_COLUMNS * CELL_SIZE + 2 * BOARD_ORIGIN_X;
 
 interface CanvasWrapperProps {
@@ -20,7 +22,6 @@ interface CanvasWrapperProps {
     goBack: () => void;
     singlePlayer?: boolean;
     gameSpeed?: number;
-    startLines?: number;
 }
 
 function CanvasWrapper(props: CanvasWrapperProps) {
@@ -28,7 +29,7 @@ function CanvasWrapper(props: CanvasWrapperProps) {
     const requestRef = useRef<number | null>(null);
     const [scaleMultiplier, setScaleMultiplier] = useState(1);
 
-    const { images, roomName, goBack, singlePlayer = false, gameSpeed = 1, startLines = 0 } = props;
+    const { images, roomName, goBack, singlePlayer = false, gameSpeed = 1 } = props;
     const { engine, connected, ready, wasReady } = useGameEngine(roomName, { singlePlayer });
 
     useEffect(() => {
@@ -134,6 +135,13 @@ function CanvasWrapper(props: CanvasWrapperProps) {
 
             drawPiece(fallingObject, columnIndex, rowIndex);
         });
+
+        const controlX = boardOriginX + engine.marioPosition * cellWidth;
+        const controlY = boardOriginY + PREVIEW_HEIGHT * scaleMultiplier + TOTAL_ROWS * cellHeight + CONTROL_GAP * scaleMultiplier;
+
+        ctx.fillStyle = "#2fbf71";
+        ctx.fillRect(controlX, controlY, cellWidth * 2, cellHeight);
+        ctx.strokeRect(controlX, controlY, cellWidth * 2, cellHeight);
     }, [images, engine, scaleMultiplier]);
 
     useEffect(() => {
@@ -160,7 +168,7 @@ function CanvasWrapper(props: CanvasWrapperProps) {
             } 
             else if (elapsed >= 1000 * (1 / gameSpeed)) {
                 engine.moveFallingObjectsDown();
-                windowStartTime = timestamp - (elapsed % 1000 * (1 / gameSpeed)); 
+                windowStartTime = timestamp; 
                 currentPhase = 0;
             }
 

@@ -11,7 +11,7 @@ export function useGameEngine(channelName: string, options: UseGameEngineOptions
     const engine = useMemo(() => new IosheeGameEngine(), []);
 
     const sendMessageRef = useRef<(payload: unknown) => void>(() => {
-        console.warn("Send message called before socket is ready");
+        return;
     });
 
     const [connected, setConnected] = useState(singlePlayer);
@@ -33,10 +33,6 @@ export function useGameEngine(channelName: string, options: UseGameEngineOptions
     }, [engine, singlePlayer]);
 
     useEffect(() => {
-        if (singlePlayer) {
-            return;
-        }
-
         if (!connected || !ready) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {

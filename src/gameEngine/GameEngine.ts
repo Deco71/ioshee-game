@@ -8,6 +8,7 @@ export class IosheeGameEngine {
     fallingObjects: FallingObjects = new FallingObjects();
     nextObjects: NextObjects = [null, null, null, null];
     points: number = 0;
+    marioPosition: number = 0;
 
     private readonly fallingObjectPool: GameObject[] = [
         Images.BLACK_STAR,
@@ -22,6 +23,8 @@ export class IosheeGameEngine {
         this.gameBoard = [this.createColumn(), this.createColumn(), this.createColumn(), this.createColumn()];
         this.updatePosition = this.updatePosition.bind(this);
         this.moveFallingObjectsDown = this.moveFallingObjectsDown.bind(this);
+        this.handleKey = this.handleKey.bind(this);
+        this.handleCollision = this.handleCollision.bind(this);
         this.spawnFallingObjects();
         this.spawnFallingObjects();
     }
@@ -55,6 +58,13 @@ export class IosheeGameEngine {
         this.fallingObjects.y += 1;
     }
 
+    private invertGameColumns(position: number) {
+        const nextPosition = position + 1;
+        const currentColumn = this.gameBoard[position];
+        this.gameBoard[position] = this.gameBoard[nextPosition];
+        this.gameBoard[nextPosition] = currentColumn;
+    }
+
     handleCollision() {
         for (let i = 0; i < this.fallingObjects.objects.length; i++) {
             if (this.fallingObjects.objects[i] !== null) {
@@ -83,12 +93,19 @@ export class IosheeGameEngine {
     handleKey(keyCode: string, sendMessage: (payload: unknown) => void) {
         sendMessage({ type: "key", keyCode });
         if (keyCode === "ArrowRight") {
-            this.updatePosition();
+            this.marioPosition = Math.min(this.marioPosition + 1, 2);
+        }
+        else if (keyCode === "ArrowLeft") {
+            this.marioPosition = Math.max(this.marioPosition - 1, 0);
+        }
+        else if (keyCode === "ArrowDown") {
+            this.invertGameColumns(this.marioPosition);
         }
     }
 
     reset() {
         this.gameBoard = [this.createColumn(), this.createColumn(), this.createColumn(), this.createColumn()];
         this.points = 0;
+        this.marioPosition = 0;
     }
 }
