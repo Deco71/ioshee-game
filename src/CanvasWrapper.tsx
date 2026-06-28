@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import type { PreloadedImages } from "./types/commonTypes";
+import type { GameEndStatus, PreloadedImages } from "./types/commonTypes";
 import { useGameEngine } from "./hooks/useGameEngine";
 import { Images } from "./types/Images";
 
@@ -28,9 +28,13 @@ function CanvasWrapper(props: CanvasWrapperProps) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const requestRef = useRef<number | null>(null);
     const [scaleMultiplier, setScaleMultiplier] = useState(1);
+    const [endGameStatus, setEndGameStatus] = useState<GameEndStatus | null>(null);
 
     const { images, roomName, goBack, singlePlayer = false, gameSpeed = 1 } = props;
-    const { engine, connected, ready, wasReady } = useGameEngine(roomName, { singlePlayer });
+    const { engine, connected, ready, wasReady } = useGameEngine(
+        roomName, 
+        (endStatus) => {setEndGameStatus(endStatus)}, 
+        { singlePlayer });
 
     useEffect(() => {
         const handleResize = () => {
@@ -52,6 +56,13 @@ function CanvasWrapper(props: CanvasWrapperProps) {
 
         return () => window.removeEventListener("resize", handleResize);
     }, []);
+
+    useEffect(() => {
+        if (endGameStatus) {
+            alert(`Game Over! Status: ${endGameStatus}`);
+            goBack();
+        }
+    }, [endGameStatus, goBack]);
 
     const getCanvasContext = useCallback((): CanvasRenderingContext2D => {
         const canvas = canvasRef.current;
@@ -156,17 +167,18 @@ function CanvasWrapper(props: CanvasWrapperProps) {
 
         const gameLoop = (timestamp : number) => {
             const elapsed = timestamp - windowStartTime;
+            const adjustedGameSpeed = engine.fastDroppingRef ? gameSpeed * 10 : gameSpeed;
             if (!ready) return;
 
             if (currentPhase === 0) {
                 engine.checkForEmptyFallingObjects();
                 currentPhase = 1; 
             } 
-            else if (currentPhase === 1 && elapsed >= 300 * (1 / gameSpeed)) {
+            else if (currentPhase === 1 && elapsed >= 300 * (1 / adjustedGameSpeed)) {
                 engine.handleCollision();
                 currentPhase = 2;
             } 
-            else if (elapsed >= 1000 * (1 / gameSpeed)) {
+            else if (elapsed >= 1000 * (1 / adjustedGameSpeed)) {
                 engine.moveFallingObjectsDown();
                 windowStartTime = timestamp; 
                 currentPhase = 0;

@@ -1,14 +1,12 @@
-export const Images = {
-  GREEN: 'GREEN',
-  BLACK_STAR: 'BLACK_STAR',
-  BLUE_STAR: 'BLUE_STAR',
-  WHITE_STAR: 'WHITE_STAR',
-  GREEN_STAR: 'GREEN_STAR',
-  RED_STAR: 'RED_STAR',
-  YELLOW_STAR: 'YELLOW_STAR',
-} as const;
-
-export type Images = keyof typeof Images;
+export enum Images {
+  GREEN = 'GREEN',
+  BLACK_STAR = 'BLACK_STAR',
+  BLUE_STAR = 'BLUE_STAR',
+  WHITE_STAR = 'WHITE_STAR',
+  GREEN_STAR = 'GREEN_STAR',
+  RED_STAR = 'RED_STAR',
+  YELLOW_STAR = 'YELLOW_STAR',
+}
 
 export function getImageUrl(image: Images): string {
     switch (image) {

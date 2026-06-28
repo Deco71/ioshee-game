@@ -1,19 +1,23 @@
 import { useRef, useEffect, useState, useMemo } from "react";
 import { IosheeGameEngine } from "../gameEngine/GameEngine";
 import { createGameSocket } from "../socket/GameSocket";
+import type { GameEndStatus } from "../types/commonTypes";
 
 interface UseGameEngineOptions {
     singlePlayer?: boolean;
 }
 
-export function useGameEngine(channelName: string, options: UseGameEngineOptions = {}) {
+export function useGameEngine(
+        channelName: string,
+        endGame: (endStatus: GameEndStatus) => void,
+        options: UseGameEngineOptions = {}
+    ) {
     const { singlePlayer = false } = options;
-    const engine = useMemo(() => new IosheeGameEngine(), []);
+    const engine = useMemo(() => new IosheeGameEngine(endGame),  []);
 
     const sendMessageRef = useRef<(payload: unknown) => void>(() => {
         return;
     });
-
     const [connected, setConnected] = useState(singlePlayer);
     const [ready, setReady] = useState(singlePlayer);
     const [wasReady, setWasReady] = useState(singlePlayer);
@@ -36,13 +40,19 @@ export function useGameEngine(channelName: string, options: UseGameEngineOptions
         if (!connected || !ready) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            engine.handleKey(e.code, sendMessageRef.current);
+            engine.handleKeyDown(e.code, sendMessageRef.current);
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            engine.handleKeyUp(e.code, sendMessageRef.current);
         };
 
         window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keyup", handleKeyUp);
 
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keyup", handleKeyUp);
         };
     }, [connected, engine, ready]);
 

@@ -1,5 +1,5 @@
 import { FallingObjects } from "../classes/FallingObjects";
-import { type Gameboard, type GameColumn, type GameObject, type NextObjects } from "../types/commonTypes";
+import { type Gameboard, type GameColumn, GameEndStatus, type GameObject, type NextObjects } from "../types/commonTypes";
 import { Images } from "../types/Images";
 import { areGameObjectsEqual } from "../utils";
 
@@ -9,6 +9,8 @@ export class IosheeGameEngine {
     nextObjects: NextObjects = [null, null, null, null];
     points: number = 0;
     marioPosition: number = 0;
+    fastDroppingRef: boolean = false;
+    endCallback: (endStatus: GameEndStatus) => void;
 
     private readonly fallingObjectPool: GameObject[] = [
         Images.BLACK_STAR,
@@ -19,14 +21,16 @@ export class IosheeGameEngine {
 
     private createColumn = (): GameColumn => [null, null, null, null, null, null, null];
 
-    constructor() {
+    constructor(endCallback: (gameEndStatus: GameEndStatus) => void) {
         this.gameBoard = [this.createColumn(), this.createColumn(), this.createColumn(), this.createColumn()];
         this.updatePosition = this.updatePosition.bind(this);
         this.moveFallingObjectsDown = this.moveFallingObjectsDown.bind(this);
-        this.handleKey = this.handleKey.bind(this);
+        this.handleKeyDown = this.handleKeyDown.bind(this);
+        this.handleKeyUp = this.handleKeyUp.bind(this);
         this.handleCollision = this.handleCollision.bind(this);
         this.spawnFallingObjects();
         this.spawnFallingObjects();
+        this.endCallback = endCallback;
     }
 
     private updatePosition() {
@@ -49,6 +53,23 @@ export class IosheeGameEngine {
         randomPositions.forEach((position, index) => {
             objects[position] = randomImages[index] ?? null;
         });
+
+        //LOSING END CONDITION
+        for (let i = 0; i < this.nextObjects.length; i++) {
+            if (this.nextObjects[i] !== null) {
+                if (this.gameBoard[i][0] !== null) {
+                    if (areGameObjectsEqual(this.gameBoard[i][0], this.nextObjects[i])) {
+                        this.gameBoard[i][0] = null;
+                        this.points += 10;
+                    } else {
+                        console.log("Collision detected at the top! Game Over.");
+                        this.endCallback(GameEndStatus.LOST_STATUS);
+                        return;
+                    }
+                }
+            }
+        }
+        
 
         this.fallingObjects = new FallingObjects([...this.nextObjects]);
         this.nextObjects = [...objects];
@@ -90,16 +111,26 @@ export class IosheeGameEngine {
         }
     }
 
-    handleKey(keyCode: string, sendMessage: (payload: unknown) => void) {
-        sendMessage({ type: "key", keyCode });
+    handleKeyDown(keyCode: string, sendMessage: (payload: unknown) => void) {
+        sendMessage({ type: "keyDown", keyCode });
         if (keyCode === "ArrowRight") {
             this.marioPosition = Math.min(this.marioPosition + 1, 2);
         }
         else if (keyCode === "ArrowLeft") {
             this.marioPosition = Math.max(this.marioPosition - 1, 0);
         }
-        else if (keyCode === "ArrowDown") {
+        else if (keyCode === "ArrowUp") {
             this.invertGameColumns(this.marioPosition);
+        } 
+        else if (keyCode === "ArrowDown") {
+            this.fastDroppingRef = true;
+        }
+    }
+
+    handleKeyUp(keyCode: string, sendMessage: (payload: unknown) => void) {
+        sendMessage({ type: "keyUp", keyCode });
+        if (keyCode === "ArrowDown") {
+            this.fastDroppingRef = false;
         }
     }
 
