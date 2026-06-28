@@ -14,16 +14,9 @@
 Install dependencies and start the dev server:
 
 ```bash
-npm install
-npm run dev
+bun i
+bun dev
 ```
-
-## Available scripts
-
-- `npm run dev` starts the Vite development server.
-- `npm run buildDev` runs the TypeScript build and then produces a production bundle.
-- `npm run lint` runs ESLint across the project.
-- `npm run preview` serves the production build locally.
 
 ## Project notes
 
@@ -37,3 +30,5 @@ npm run dev
 - TypeScript
 - Vite
 - Sass Embedded for styling support
+
+- (Yes this readme is AI generated, please don't judge)
