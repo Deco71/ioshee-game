@@ -67,6 +67,7 @@ export class IosheeGameEngine {
                 if (this.gameBoard[i][0] !== null) {
                     if (areGameObjectsEqual(this.gameBoard[i][0], this.nextObjects[i])) {
                         this.gameBoard[i][0] = null;
+                        this.nextObjects[i] = null;
                         this.points += 10;
                     } else {
                         console.log("Collision detected at the top! Game Over.");
@@ -87,24 +88,27 @@ export class IosheeGameEngine {
     }
 
     private invertGameColumns() {
-        const nextPosition = this.marioPosition + 1;
         const currentColumn = this.gameBoard[this.marioPosition];
+        const fallingObjects = this.fallingObjects.objects;
         
-        /*const fallingObjects = this.fallingObjects.objects;
-        const fallingObjectsY = this.fallingObjects.y;
+        if (fallingObjects[this.marioPosition] !== null) {
+            if (this.gameBoard[this.marioPosition + 1][this.fallingObjects.y] !== null) {
+                const tempFallingObject = fallingObjects[this.marioPosition];
+                fallingObjects[this.marioPosition] = null;
+                fallingObjects[this.marioPosition + 1] = tempFallingObject;
+            }
+        }
+        if (fallingObjects[this.marioPosition + 1] !== null) {
+            if (this.gameBoard[this.marioPosition][this.fallingObjects.y] !== null) {
+                const tempFallingObject = fallingObjects[this.marioPosition + 1];
+                fallingObjects[this.marioPosition + 1] = null;
+                fallingObjects[this.marioPosition] = tempFallingObject;
+            }
+        }
 
-        if (this.gameBoard[this.marioPosition][fallingObjectsY] !== null && 
-            || 
-            this.fallingObjects.objects[nextPosition] !== null
-        ) {
-            const tempFallingObject = this.fallingObjects.objects[this.marioPosition];
-            this.fallingObjects.objects[this.marioPosition] = this.fallingObjects.objects[nextPosition];
-            this.fallingObjects.objects[nextPosition] = tempFallingObject;
-        }*/
 
-
-        this.gameBoard[this.marioPosition] = this.gameBoard[nextPosition];
-        this.gameBoard[nextPosition] = currentColumn;
+        this.gameBoard[this.marioPosition] = this.gameBoard[this.marioPosition + 1];
+        this.gameBoard[this.marioPosition + 1] = currentColumn;
     }
 
     private checkForEmptyBoard() {
