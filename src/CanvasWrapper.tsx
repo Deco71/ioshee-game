@@ -22,6 +22,7 @@ interface CanvasWrapperProps {
     goBack: () => void;
     singlePlayer?: boolean;
     gameSpeed?: number;
+    gameLevel?: number;
 }
 
 function CanvasWrapper(props: CanvasWrapperProps) {
@@ -30,11 +31,11 @@ function CanvasWrapper(props: CanvasWrapperProps) {
     const [scaleMultiplier, setScaleMultiplier] = useState(1);
     const [endGameStatus, setEndGameStatus] = useState<GameEndStatus | null>(null);
 
-    const { images, roomName, goBack, singlePlayer = false, gameSpeed = 1 } = props;
+    const { images, roomName, goBack, singlePlayer = false, gameSpeed = 1, gameLevel = 3 } = props;
     const { engine, connected, ready, wasReady } = useGameEngine(
         roomName, 
         (endStatus) => {setEndGameStatus(endStatus)}, 
-        { singlePlayer });
+        { singlePlayer, gameLevel, gameSpeed });
 
     useEffect(() => {
         const handleResize = () => {
@@ -167,7 +168,7 @@ function CanvasWrapper(props: CanvasWrapperProps) {
 
         const gameLoop = (timestamp : number) => {
             const elapsed = timestamp - windowStartTime;
-            const adjustedGameSpeed = engine.fastDroppingRef ? gameSpeed * 10 : gameSpeed;
+            const adjustedGameSpeed = engine.fastDroppingRef ? engine.gameSpeed * 10 : engine.gameSpeed;
             if (!ready) return;
 
             if (currentPhase === 0) {

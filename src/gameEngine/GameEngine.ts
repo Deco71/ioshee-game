@@ -7,6 +7,7 @@ export class IosheeGameEngine {
     gameBoard: Gameboard;
     fallingObjects: FallingObjects = new FallingObjects();
     nextObjects: NextObjects = [null, null, null, null];
+    gameSpeed: number;
     points: number = 0;
     marioPosition: number = 0;
     fastDroppingRef: boolean = false;
@@ -21,23 +22,29 @@ export class IosheeGameEngine {
 
     private createColumn = (): GameColumn => [null, null, null, null, null, null, null];
 
-    constructor(endCallback: (gameEndStatus: GameEndStatus) => void) {
-        this.gameBoard = [this.createColumn(), this.createColumn(), this.createColumn(), this.createColumn()];
+    constructor(gameLevel: number, gameSpeed: number, endCallback: (gameEndStatus: GameEndStatus) => void) {
+        this.gameBoard = this.createGameboard(gameLevel);
+        this.gameSpeed = gameSpeed;
+
         this.updatePosition = this.updatePosition.bind(this);
         this.moveFallingObjectsDown = this.moveFallingObjectsDown.bind(this);
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleKeyUp = this.handleKeyUp.bind(this);
         this.handleCollision = this.handleCollision.bind(this);
-        this.spawnFallingObjects();
-        this.spawnFallingObjects();
+        this.reset = this.reset.bind(this);
         this.endCallback = endCallback;
+        this.spawnFallingObjects();
+        this.spawnFallingObjects();
+    }
+
+    private createGameboard(gameLevel: number): Gameboard {
+        const gameBoard: Gameboard = [this.createColumn(), this.createColumn(), this.createColumn(), this.createColumn()];
+        console.log(`Gameboard created with level ${gameLevel}:`, gameBoard);
+        return gameBoard;
     }
 
     private updatePosition() {
         this.points = this.points + 10;
-        if (this.points > 400) {
-            this.points = -100;
-        }
     }
 
     private pickRandomItems<T>(items: T[], count: number) {
@@ -79,14 +86,37 @@ export class IosheeGameEngine {
         this.fallingObjects.y += 1;
     }
 
-    private invertGameColumns(position: number) {
-        const nextPosition = position + 1;
-        const currentColumn = this.gameBoard[position];
-        this.gameBoard[position] = this.gameBoard[nextPosition];
+    private invertGameColumns() {
+        const nextPosition = this.marioPosition + 1;
+        const currentColumn = this.gameBoard[this.marioPosition];
+        
+        /*const fallingObjects = this.fallingObjects.objects;
+        const fallingObjectsY = this.fallingObjects.y;
+
+        if (this.gameBoard[this.marioPosition][fallingObjectsY] !== null && 
+            || 
+            this.fallingObjects.objects[nextPosition] !== null
+        ) {
+            const tempFallingObject = this.fallingObjects.objects[this.marioPosition];
+            this.fallingObjects.objects[this.marioPosition] = this.fallingObjects.objects[nextPosition];
+            this.fallingObjects.objects[nextPosition] = tempFallingObject;
+        }*/
+
+
+        this.gameBoard[this.marioPosition] = this.gameBoard[nextPosition];
         this.gameBoard[nextPosition] = currentColumn;
     }
 
+    private checkForEmptyBoard() {
+        const isBoardEmpty = this.gameBoard.every(column => column.every(cell => cell === null));
+        if (isBoardEmpty) {
+            console.log("All objects removed! You win!");
+            this.endCallback(GameEndStatus.WIN_STATUS);
+        }
+    }
+
     handleCollision() {
+        let howMuchRemoved = 0;
         for (let i = 0; i < this.fallingObjects.objects.length; i++) {
             if (this.fallingObjects.objects[i] !== null) {
                 if (this.fallingObjects.y === 6 || this.gameBoard[i][this.fallingObjects.y+1] !== null) {
@@ -96,12 +126,16 @@ export class IosheeGameEngine {
                         fallingObjects[i] = null;
                         column[this.fallingObjects.y+1] = null;
                         this.points += 10;
+                        howMuchRemoved++;
                     } else {
                         this.gameBoard[i][this.fallingObjects.y] = fallingObjects[i];
                         fallingObjects[i] = null;
                     }
                 }
             }
+        }
+        if (howMuchRemoved > 1) {
+            this.checkForEmptyBoard();
         }
     }
 
@@ -120,7 +154,7 @@ export class IosheeGameEngine {
             this.marioPosition = Math.max(this.marioPosition - 1, 0);
         }
         else if (keyCode === "ArrowUp") {
-            this.invertGameColumns(this.marioPosition);
+            this.invertGameColumns();
         } 
         else if (keyCode === "ArrowDown") {
             this.fastDroppingRef = true;
@@ -134,8 +168,8 @@ export class IosheeGameEngine {
         }
     }
 
-    reset() {
-        this.gameBoard = [this.createColumn(), this.createColumn(), this.createColumn(), this.createColumn()];
+    reset(gameLevel: number) {
+        this.gameBoard = this.createGameboard(gameLevel);
         this.points = 0;
         this.marioPosition = 0;
     }

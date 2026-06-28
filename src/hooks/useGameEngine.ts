@@ -4,16 +4,18 @@ import { createGameSocket } from "../socket/GameSocket";
 import type { GameEndStatus } from "../types/commonTypes";
 
 interface UseGameEngineOptions {
-    singlePlayer?: boolean;
+    gameLevel: number;
+    gameSpeed: number;
+    singlePlayer: boolean;
 }
 
 export function useGameEngine(
         channelName: string,
         endGame: (endStatus: GameEndStatus) => void,
-        options: UseGameEngineOptions = {}
+        options: UseGameEngineOptions
     ) {
-    const { singlePlayer = false } = options;
-    const engine = useMemo(() => new IosheeGameEngine(endGame),  []);
+    const { singlePlayer = false, gameLevel, gameSpeed} = options;
+    const engine = useMemo(() => new IosheeGameEngine(gameLevel, gameSpeed, endGame),  []);
 
     const sendMessageRef = useRef<(payload: unknown) => void>(() => {
         return;
@@ -23,8 +25,8 @@ export function useGameEngine(
     const [wasReady, setWasReady] = useState(singlePlayer);
 
     useEffect(() => {
-        engine.reset();
-    }, [engine]);
+        engine.reset(gameLevel);
+    }, [engine, gameLevel]);
 
     useEffect(() => {
         if (!singlePlayer) {
@@ -68,7 +70,6 @@ export function useGameEngine(
                 setWasReady(true);
             },
             onMoveGreenDown: () => engine.moveFallingObjectsDown(),
-            onReset: () => engine.reset(),
             onPause: () => setReady(false),
             onClose: () => {
                 setConnected(false);

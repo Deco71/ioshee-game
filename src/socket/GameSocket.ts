@@ -2,7 +2,6 @@ export interface GameSocketHandlers {
     onOpen: () => void;
     onReady: () => void;
     onMoveGreenDown: () => void;
-    onReset: () => void;
     onPause: () => void;
     onClose: () => void;
     onError: (event: Event) => void;
@@ -55,8 +54,6 @@ export class GameSocket {
             this.handlers.onReady();
         } else if (message === "moveGreenDown") {
             this.handlers.onMoveGreenDown();
-        } else if (message === "reset") {
-            this.handlers.onReset();
         } else if (message === "pause") {
             this.handlers.onPause();
         }
