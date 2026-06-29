@@ -31,20 +31,25 @@ function HowToPlay({ onBack }: HowToPlayProps) {
 
                 <h2 className="section-title">How to Play</h2>
                 <p className="htp-intro">
-                    ioshee is a puzzle game about building the perfect burger!
-                    Ingredients fall from above — stack them between the <strong>top and bottom bun</strong> to
-                    assemble a complete, delicious hamburger and score big points.
+                    <strong>ioshee</strong> is a fast-paced burger-building puzzle game! Stack falling ingredients between bun halves to build complete hamburgers.
+                    But be fast! The <strong>game speeds up</strong> as time passes, making it harder to build the perfect burger!
                 </p>
 
-                <div className="htp-goal-banner">
-                    <span className="htp-goal-icon">🍔</span>
-                    <div>
-                        <strong>Final Goal</strong>
-                        <p>
-                            Seal ingredients between a <strong>bottom bun</strong> and a <strong>top bun</strong>
-                            to complete a burger. The more ingredients inside — and the rarer they are —
-                            the higher your score!
-                        </p>
+                <div className="htp-modes-section">
+                    <h3 className="htp-modes-title">Game Modes</h3>
+                    <div className="htp-modes-grid">
+                        <div className="htp-mode-card htp-mode-card--single">
+                            <h4>🎮 Single Player</h4>
+                            <p>
+                                Build burgers to score as many points as possible before reaching a <strong>game over</strong> (when the board fills up completely).
+                            </p>
+                        </div>
+                        <div className="htp-mode-card htp-mode-card--multi">
+                            <h4>👥 Multiplayer</h4>
+                            <p>
+                                Build burgers to <strong>"send" ingredients</strong> to the other player's board to disrupt their work. Win by clearing all ingredients on your board first, or making the opponent <strong>K.O.</strong>
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -52,10 +57,9 @@ function HowToPlay({ onBack }: HowToPlayProps) {
                     <div className="htp-step">
                         <div className="htp-step-number">1</div>
                         <div className="htp-step-content">
-                            <h3>Ingredients Fall from Above</h3>
+                            <h3>Ingredients Fall</h3>
                             <p>
-                                Bun halves and burger ingredients drop into the columns of the board one at a time.
-                                You cannot control <em>what</em> falls, only <em>where</em> it lands.
+                                Bun halves and ingredients drop into the columns one at a time. You control where they land.
                             </p>
                         </div>
                     </div>
@@ -63,11 +67,9 @@ function HowToPlay({ onBack }: HowToPlayProps) {
                     <div className="htp-step">
                         <div className="htp-step-number">2</div>
                         <div className="htp-step-content">
-                            <h3>Move to Choose a Column</h3>
+                            <h3>Swap Columns</h3>
                             <p>
-                                Move your character left or right using the
-                                <strong> ← → arrow keys</strong> (or <strong>A / D</strong>).
-                                The falling ingredient will drop into the column you're standing under.
+                                Move left/right with the <strong>arrow keys</strong>, and press <strong>Up arrow</strong> to swap the columns above you.
                             </p>
                         </div>
                     </div>
@@ -75,11 +77,9 @@ function HowToPlay({ onBack }: HowToPlayProps) {
                     <div className="htp-step">
                         <div className="htp-step-number">3</div>
                         <div className="htp-step-content">
-                            <h3>Build Your Burger</h3>
+                            <h3>Build Burgers</h3>
                             <p>
-                                Stack ingredients between a <strong>bottom bun</strong> and a <strong>top bun</strong>
-                                in the same column. When the top bun lands on the bottom bun,
-                                the burger is complete and gets served!
+                                Stack ingredients between a <strong>bottom bun</strong> and a <strong>top bun</strong> in the same column to complete and serve it.
                             </p>
                         </div>
                     </div>
@@ -87,11 +87,9 @@ function HowToPlay({ onBack }: HowToPlayProps) {
                     <div className="htp-step">
                         <div className="htp-step-number">4</div>
                         <div className="htp-step-content">
-                            <h3>Fuller Burgers = More Points</h3>
+                            <h3>Clear Space</h3>
                             <p>
-                                Every ingredient inside the bun adds to your score. A burger with
-                                <strong> patty + lettuce + tomato + cheese</strong> scores far more than a plain bun sandwich.
-                                But watch out — a burger <em>missing the patty</em> loses a score bonus!
+                                Stack two of the same ingredient consecutively to clear them, making room and gaining minor points.
                             </p>
                         </div>
                     </div>
@@ -99,10 +97,19 @@ function HowToPlay({ onBack }: HowToPlayProps) {
                     <div className="htp-step">
                         <div className="htp-step-number">5</div>
                         <div className="htp-step-content">
-                            <h3>Don't Let the Board Fill Up</h3>
+                            <h3>Fuller Burgers = More Points</h3>
                             <p>
-                                If any column fills to the top with no room left, it's game over.
-                                Keep completing burgers to clear space and keep the kitchen running!
+                                Stacking more ingredients inside a burger increases your score. A burger with all toppings (<strong>patty, lettuce, tomato, cheese</strong>) gets a bonus, while missing ingredients reduce the reward.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="htp-step">
+                        <div className="htp-step-number">6</div>
+                        <div className="htp-step-content">
+                            <h3>Don't Overflow</h3>
+                            <p>
+                                Keep completing burgers or matching ingredients to clear space. If any column fills to the top, it's game over!
                             </p>
                         </div>
                     </div>
@@ -114,45 +121,33 @@ function HowToPlay({ onBack }: HowToPlayProps) {
                         <div className="htp-piece-card">
                             <div className="htp-piece-icon">🍞</div>
                             <strong>Bottom Bun</strong>
-                            <p>The base of your burger. Catches all the ingredients above it.</p>
+                            <p>The base. Catches ingredients above it.</p>
                         </div>
                         <div className="htp-piece-card">
                             <div className="htp-piece-icon">🔝</div>
                             <strong>Top Bun</strong>
-                            <p>Seals the burger. Drop it to complete and score!</p>
+                            <p>Seals the burger to complete it.</p>
                         </div>
                         <div className="htp-piece-card">
                             <div className="htp-piece-icon">🥩</div>
                             <strong>Patty</strong>
-                            <p>The star ingredient. A burger without it scores fewer points!</p>
+                            <p>Essential star ingredient for high scores.</p>
                         </div>
                         <div className="htp-piece-card">
                             <div className="htp-piece-icon">🥬</div>
                             <strong>Lettuce</strong>
-                            <p>Fresh and crunchy. Adds a nice score bonus.</p>
+                            <p>Fresh and crunchy green bonus.</p>
                         </div>
                         <div className="htp-piece-card">
                             <div className="htp-piece-icon">🍅</div>
                             <strong>Tomato</strong>
-                            <p>Juicy and ripe. Stack it for extra points.</p>
+                            <p>Juicy slice for extra score.</p>
                         </div>
                         <div className="htp-piece-card">
                             <div className="htp-piece-icon">🧀</div>
                             <strong>Cheese</strong>
-                            <p>Melty goodness. The finishing touch for a perfect score.</p>
+                            <p>Melty topping for a perfect score.</p>
                         </div>
-                    </div>
-                </div>
-
-                <div className="htp-scoring-note">
-                    <span className="htp-scoring-icon">⭐</span>
-                    <div>
-                        <strong>Scoring Tip</strong>
-                        <p>
-                            The perfect burger — <strong>bottom bun → patty → lettuce → tomato → cheese → top bun</strong> —
-                            earns the maximum score. Missing or duplicating ingredients reduces your reward.
-                            Plan your stacks wisely!
-                        </p>
                     </div>
                 </div>
             </div>
