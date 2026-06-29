@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { getImageUrl, type Images } from "./types/Images";
-import type { PreloadedImages } from "./types/commonTypes";
+import { getImageUrl, type Images } from "../types/Images";
+import type { PreloadedImages } from "../types/commonTypes";
 
 export function useImagePreloader(imageSources: Map<Images, string>) {
     const [images, setImages] = useState<PreloadedImages>(new Map());

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import type { GameEndStatus, PreloadedImages } from "./types/commonTypes";
-import { useGameEngine } from "./hooks/useGameEngine";
-import { Images } from "./types/Images";
+import type { GameEndStatus, PreloadedImages } from "../types/commonTypes";
+import { useGameEngine } from "../hooks/useGameEngine";
+import { Images } from "../types/Images";
+import { useTheme } from "../context/ThemeContext";
+import Button, { ButtonVariant } from "../components/Button";
 
 const BOARD_COLUMNS = 4;
 const PREVIEW_ROWS = 1;
@@ -30,25 +32,26 @@ function CanvasWrapper(props: CanvasWrapperProps) {
     const requestRef = useRef<number | null>(null);
     const [scaleMultiplier, setScaleMultiplier] = useState(1);
     const [endGameStatus, setEndGameStatus] = useState<GameEndStatus | null>(null);
+    const { theme } = useTheme();
 
     const { images, roomName, goBack, singlePlayer = false, gameSpeed = 1, gameLevel = 3 } = props;
     const { engine, connected, ready, wasReady } = useGameEngine(
-        roomName, 
-        (endStatus) => {setEndGameStatus(endStatus)}, 
+        roomName,
+        (endStatus) => { setEndGameStatus(endStatus) },
         { singlePlayer, gameLevel, gameSpeed });
 
     useEffect(() => {
         const handleResize = () => {
-            const HEIGHT_BUFFER = 200; 
-            const WIDTH_BUFFER = 40;   
+            const HEIGHT_BUFFER = 200;
+            const WIDTH_BUFFER = 40;
 
             const availableWidth = window.innerWidth - WIDTH_BUFFER;
             const availableHeight = window.innerHeight - HEIGHT_BUFFER;
 
             const rawScale = Math.min(availableWidth, availableHeight) / BOARD_HEIGHT;
-            
-            const scale = Math.max(rawScale, 0.2); 
-            
+
+            const scale = Math.max(rawScale, 0.2);
+
             setScaleMultiplier(scale);
         };
 
@@ -74,8 +77,22 @@ function CanvasWrapper(props: CanvasWrapperProps) {
     }, []);
 
     const render = useCallback((ctx: CanvasRenderingContext2D) => {
+        const palette = theme === "dark"
+            ? {
+                bg: "#0d1117",
+                gridStroke: "rgba(0,230,118,0.18)",
+                playerFill: "rgba(0,230,118,0.85)",
+                playerStroke: "#00e676",
+            }
+            : {
+                bg: "#f6f2ea",
+                gridStroke: "#3b2f2a",
+                playerFill: "#2fbf71",
+                playerStroke: "#3b2f2a",
+            };
+
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        ctx.fillStyle = "#f6f2ea";
+        ctx.fillStyle = palette.bg;
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
         const cellWidth = CELL_SIZE * scaleMultiplier;
@@ -91,7 +108,7 @@ function CanvasWrapper(props: CanvasWrapperProps) {
 
             // Calculate base Y position
             let y = boardOriginY + rowIndex * cellHeight;
-            
+
             // Add the preview gap offset for pieces on the main board
             if (rowIndex >= PREVIEW_ROWS) {
                 y += PREVIEW_HEIGHT * scaleMultiplier;
@@ -106,7 +123,7 @@ function CanvasWrapper(props: CanvasWrapperProps) {
             );
         };
 
-        ctx.strokeStyle = "#3b2f2a";
+        ctx.strokeStyle = palette.gridStroke;
         ctx.lineWidth = 2;
 
         // Draw Preview Row
@@ -151,10 +168,11 @@ function CanvasWrapper(props: CanvasWrapperProps) {
         const controlX = boardOriginX + engine.marioPosition * cellWidth;
         const controlY = boardOriginY + PREVIEW_HEIGHT * scaleMultiplier + TOTAL_ROWS * cellHeight + CONTROL_GAP * scaleMultiplier;
 
-        ctx.fillStyle = "#2fbf71";
+        ctx.fillStyle = palette.playerFill;
         ctx.fillRect(controlX, controlY, cellWidth * 2, cellHeight);
+        ctx.strokeStyle = palette.playerStroke;
         ctx.strokeRect(controlX, controlY, cellWidth * 2, cellHeight);
-    }, [images, engine, scaleMultiplier]);
+    }, [images, engine, scaleMultiplier, theme]);
 
     useEffect(() => {
         if (!ready) {
@@ -166,22 +184,22 @@ function CanvasWrapper(props: CanvasWrapperProps) {
         let windowStartTime = performance.now();
         let currentPhase = 0;
 
-        const gameLoop = (timestamp : number) => {
+        const gameLoop = (timestamp: number) => {
             const elapsed = timestamp - windowStartTime;
             const adjustedGameSpeed = engine.fastDroppingRef ? engine.gameSpeed * 10 : engine.gameSpeed;
             if (!ready) return;
 
             if (currentPhase === 0) {
                 engine.checkForEmptyFallingObjects();
-                currentPhase = 1; 
-            } 
+                currentPhase = 1;
+            }
             else if (currentPhase === 1 && elapsed >= 300 * (1 / adjustedGameSpeed)) {
                 engine.handleCollision();
                 currentPhase = 2;
-            } 
+            }
             else if (elapsed >= 1000 * (1 / adjustedGameSpeed)) {
                 engine.moveFallingObjectsDown();
-                windowStartTime = timestamp; 
+                windowStartTime = timestamp;
                 currentPhase = 0;
             }
 
@@ -229,12 +247,12 @@ function CanvasWrapper(props: CanvasWrapperProps) {
                         <p>Please wait while we establish a connection.</p>
                     </div>
                 )}
-            <button
-                className="back-button"
+            <Button
+                variant={ButtonVariant.BACK}
                 onClick={goBack}
             >
                 Back to Room Selection
-            </button>
+            </Button>
         </div>
     );
 }

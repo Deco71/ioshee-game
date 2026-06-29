@@ -1,4 +1,4 @@
-import { FallingObjects } from "../classes/FallingObjects";
+import { FallingObjects } from "./FallingObjects";
 import { type Gameboard, type GameColumn, GameEndStatus, type GameObject, type NextObjects } from "../types/commonTypes";
 import { Images } from "../types/Images";
 import { areGameObjectsEqual } from "../utils";
